@@ -1,0 +1,289 @@
+#!/bin/bash
+##
+## MATLAB submission script for PBS on CR2 
+## ------------------------------------------
+##
+##"MATLAB-sub2022v1"
+## Follow the 6 steps below to configure your job
+## 
+## STEP 1:
+##
+## Enter a job name after the -N on the line below:
+##
+#PBS -N VariantCalling_s411309_
+##
+## STEP 2:
+##
+## Select the number of cpus/cores required by modifying the #PBS -l select line below
+##
+## Normally you select cpus in chunks of 16 cpus
+## The Maximum value for ncpus is 16 and mpiprocs MUST be the same value as ncpus.
+##
+## PLEASE NOTE
+## ===========
+## The standard matlab application does not run on more than one node
+## This select line must not be altered
+##
+#PBS -l select=1:ncpus=8:mpiprocs=8
+##
+## STEP 3:
+##
+## Select the correct queue by modifying the #PBS -q line below
+##
+## half_hour	-  30 minutes
+## one_hour	-   1 hour
+## three_hour   -   3 hours
+## six_hour     -   6 hours
+## half_day	-  12 hours
+## one_day	-  24 hours
+## two_day	-  48 hours
+## five_day	- 120 hours
+## ten_day	- 240 hours (by special arrangement)
+##
+#PBS -q one_day
+##
+## STEP 4:
+##
+## Replace the hpc@cranfield.ac.uk email address
+## with your Cranfield email address on the #PBS -M line below:
+## Your email address is NOT your username
+##
+#PBS -m abe 
+#PBS -M khalidadam.yusuf.309@cranfield.ac.uk
+##
+## ====================================
+## DO NOT CHANGE THE LINES BETWEEN HERE
+## ====================================
+#PBS -l application=matlab
+#PBS -j oe
+#PBS -W sandbox=PRIVATE
+#PBS -k n
+ln -s $PWD $PBS_O_WORKDIR/$PBS_JOBID
+## Change to working directory
+cd $PBS_O_WORKDIR
+## Calculate number of CPUs
+export cpus=`cat $PBS_NODEFILE | wc -l`
+## ========
+## AND HERE
+## ========
+##
+## STEP 5: 
+## 
+## Load the production USE
+module use /apps2/modules/all 
+##  Load the default application environment
+##
+##Your Work starts here:
+###############################
+###############################
+##Variant calling###
+
+module load BCFtools
+module load SAMtools
+module load picard
+
+##Marking duplicates from the generated bam files
+
+# Define input and output directories
+input_dir="/mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/BAMs_STAR/"
+output_dir="/mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Marked_BAMs/"
+
+# Loop over input BAM files
+for bam_file in "$input_dir"*.bam; do
+    # Extract sample name from the file
+    sample_name=$(basename "${bam_file%.bam}")
+
+    # Run Picard MarkDuplicates
+    java -jar $EBROOTPICARD/picard.jar MarkDuplicates \
+        --INPUT "$bam_file" \
+        --OUTPUT "$output_dir$sample_name.marked.bam" \
+        --METRICS_FILE "$output_dir$sample_name.metrics.txt" \
+        --CREATE_INDEX true
+
+done
+
+##Producing a sequence dictionary for reference fasta sequences
+java -jar $EBROOTPICARD/picard.jar CreateSequenceDictionary \
+--REFERENCE flang.fasta \
+--OUTPUT flang.dict
+
+##Producing a SAMtools index
+samtools faidx flang.fasta
+
+##Summarizing the input marked BAMs data into VCF files
+bcftools mpileup -f flang.fasta \
+/mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Marked_BAMs/B009951Aligned.sortedByCoord.out.marked.bam \
+> /mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Raw_VCFs/B009951.raw.vcf
+
+bcftools mpileup -f flang.fasta \
+/mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Marked_BAMs/B009952Aligned.sortedByCoord.out.marked.bam \
+> /mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Raw_VCFs/B009952.raw.vcf
+
+bcftools mpileup -f flang.fasta \
+/mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Marked_BAMs/B009953Aligned.sortedByCoord.out.marked.bam \
+> /mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Raw_VCFs/B009953.raw.vcf
+
+bcftools mpileup -f flang.fasta \
+/mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Marked_BAMs/B50981Aligned.sortedByCoord.out.marked.bam \
+> /mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Raw_VCFs/B50981.raw.vcf
+
+bcftools mpileup -f flang.fasta \
+/mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Marked_BAMs/B50982Aligned.sortedByCoord.out.marked.bam \
+> /mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Raw_VCFs/B50982.raw.vcf
+
+bcftools mpileup -f flang.fasta \
+/mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Marked_BAMs/B50983Aligned.sortedByCoord.out.marked.bam \
+> /mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Raw_VCFs/B50983.raw.vcf
+
+bcftools mpileup -f flang.fasta \
+/mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Marked_BAMs/B50995s1Aligned.sortedByCoord.out.marked.bam \
+> /mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Raw_VCFs/B50995s1.raw.vcf
+
+bcftools mpileup -f flang.fasta \
+/mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Marked_BAMs/B50995s2Aligned.sortedByCoord.out.marked.bam \
+> /mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Raw_VCFs/B50995s2.raw.vcf
+
+bcftools mpileup -f flang.fasta \
+/mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Marked_BAMs/B50995s3Aligned.sortedByCoord.out.marked.bam \
+> /mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Raw_VCFs/B50995s3.raw.vcf
+
+# Define input and output directories
+#input_dir="/mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Marked_BAMs/"
+#output_dir="/mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Raw_VCFs/"
+
+# Loop over input marked BAM files
+#for marked_bam_file in "$input_dir"*marked.bam; do
+    # Extract sample name from the file
+ #   sample_name=$(basename "${marked_bam_file%marked.bam}")
+
+    # Run mpileup command and pipe the output to bcftools call
+#    bcftools mpileup -f flang.fasta "$marked_bam_file" | bcftools call -mv -o "$output_dir$sample_name.raw.vcf"
+#done
+
+##Assign specific genotypes to each site
+
+mkdir -p /mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Called_raw_vcfs/
+
+#Variant calling
+bcftools call -vc --ploidy 1 \
+/mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Raw_VCFs/B009951.raw.vcf \
+> /mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Called_raw_vcfs/B009951.called.raw.vcf
+
+bcftools call -vc --ploidy 1 \
+/mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Raw_VCFs/B009952.raw.vcf \
+> /mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Called_raw_vcfs/B009952.called.raw.vcf
+
+bcftools call -vc --ploidy 1 \
+/mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Raw_VCFs/B009953.raw.vcf \
+> /mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Called_raw_vcfs/B009953.called.raw.vcf
+
+bcftools call -vc --ploidy 1 \
+/mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Raw_VCFs/B50981.raw.vcf \
+> /mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Called_raw_vcfs/B50981.called.raw.vcf
+
+bcftools call -vc --ploidy 1 \
+/mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Raw_VCFs/B50982.raw.vcf \
+> /mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Called_raw_vcfs/B50982.called.raw.vcf
+
+bcftools call -vc --ploidy 1 \
+/mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Raw_VCFs/B50983.raw.vcf \
+> /mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Called_raw_vcfs/B50983.called.raw.vcf
+
+bcftools call -vc --ploidy 1 \
+/mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Raw_VCFs/B50995s1.raw.vcf \
+> /mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Called_raw_vcfs/B50995s1.called.raw.vcf
+
+bcftools call -vc --ploidy 1 \
+/mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Raw_VCFs/B50995s2.raw.vcf \
+> /mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Called_raw_vcfs/B50995s2.called.raw.vcf
+
+bcftools call -vc --ploidy 1 \
+/mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Raw_VCFs/B50995s3.raw.vcf \
+> /mnt/beegfs/home/s411309/I-BIX-NGS_dataForAssignment_flang/variantcalling/Called_raw_vcfs/B50995s3.called.raw.vcf
+
+
+##1. perform FastQC on the raw reads
+######################################
+
+
+##remember to purge modules between tools avoid confict of libraries
+##and potential errors. To do so type module purge below
+
+########################################################
+##Move QC files to designated folders:
+########################################################
+
+
+########################################################
+## 2. Perform read filtration using Trimommatic
+## You can do this using a loop as shown below:
+########################################################
+## Load module Trimmomatic
+
+
+## Apply for loop to trim all reads in the raw_reads file
+
+
+##Move trimmed reads into designated folder
+
+
+###3. Create genome index for star
+########################################################
+######## Load module STAR #################
+
+##Create directory for genomeIndex
+
+
+########################################################
+##4. Align reads using STAR
+########################################################
+##You can either hardcode the commands as shown below
+##or implement a loop to go through the rawReads dir
+##and dynamically execute star for each pair of read files
+##like Trimmomatic above
+##
+## --outFileNamePrefix parameter is important here 
+## otherwise you will overwrite the STAR output
+
+
+## Move BAM files together in the BAM folder inside the RNA-Seq_fruitFly directory
+
+##Move STAR log files to their designated folders
+
+
+##########################################################
+##5. Perform read counts on the bam files using HTSeq
+## Make sure you use other gff parameters if your annotation file
+## doesn't have the default values (i.e. -i , -t, --additional-attr).
+## https://htseq.readthedocs.io/en/release_0.11.1/count.html
+##########################################################
+
+
+##Make directory for HTSeq
+
+ ## You can either do it for each sample individually or create a for loop to do it iteratively
+
+#########################################################
+##6. Differential expression and dowstream analysis can be 
+##   performed directly on R
+###########################################################
+
+
+## Tidy up the log directory
+
+
+##
+## STEP 6: 
+## 
+## Put the correct parameters in the matlab execution line
+## below to run MATLAB
+## Unless you are sure do not change the default parameters
+##
+## The main parameters to modify is the input filename - change example.m to your own filename
+
+
+## Tidy up the log directory
+## DO NOT CHANGE THE LINE BELOW
+## ============================
+rm $PBS_O_WORKDIR/$PBS_JOBID
+#

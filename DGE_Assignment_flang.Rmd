@@ -1,0 +1,197 @@
+---
+title: "NGS Assignment"
+author: "Khalid A Yusuf s411309"
+date: "2023-11-18"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(DESeq2)
+library("RColorBrewer")
+library("gplots")
+library("RColorBrewer")
+library(pheatmap)
+library(ggplot2)
+library(VennDiagram)
+```
+
+```{r}
+setwd("C:/Users/khali/OneDrive/NGS/NGS_Assignment")
+```
+#Building dataframe for the analysis
+```{r}
+sampleFiles <- c("B009951Aligned.sortedByCoord.out.txt",
+                 "B009952Aligned.sortedByCoord.out.txt",
+                 "B009953Aligned.sortedByCoord.out.txt",
+                 "B50995s1Aligned.sortedByCoord.out.txt",
+                 "B50995s2Aligned.sortedByCoord.out.txt",
+                 "B50995s3Aligned.sortedByCoord.out.txt",
+                 "B50981Aligned.sortedByCoord.out.txt",
+                 "B50982Aligned.sortedByCoord.out.txt",
+                 "B50983Aligned.sortedByCoord.out.txt")
+
+sampleNames <- c("20-0.995-1", "20-0.995-2", "20-0.995-3",
+                 "25-0.995-1", "25-0.995-2", "25-0.995-3",
+                 "25-0.98-1", "25-0.98-2", "25-0.98-3")
+
+sampleCondition <- c("20-0.995-n", "20-0.995-n", "20-0.995-n",
+                    "25-0.995-c", "25-0.995-c", "25-0.995-c",
+                    "25-0.98-c", "25-0.98-c", "25-0.98-c")
+
+sampleTable <- data.frame(sampleName = sampleNames, fileName = sampleFiles, condition = sampleCondition)
+
+#Setting a vector with the three treatments (conditions)
+treatments = c("20-0.995-n", "25-0.995-c", "25-0.98-c")
+```
+
+#Building the DESeqDataSet object and performing differential expression analysis on the data using DESeq
+```{r}
+ddsHTSeq <- DESeqDataSetFromHTSeqCount(sampleTable = sampleTable, directory = "C:/Users/khali/OneDrive/NGS/NGS_Assignment", design = ~ condition)
+
+dds <- DESeq(ddsHTSeq)
+```
+
+3a) Exploratory data analysis
+```{r}
+#MA-plot of log2 fold changes and the means of normalized counts 
+plotMA(dds, ylim=c(-5,5), main = "Climate change RNA-seq Experiment on F. langsethiae")
+```
+#Transforming raw counts into normalized values using rlog and variance stabilization
+```{r}
+rld <- rlogTransformation(dds, blind = T)
+
+vsd <- varianceStabilizingTransformation(dds, blind = T)
+```
+#HCA
+```{r}
+
+#Variance stabilization
+sampleDists <- dist(t(assay(vsd)))
+sampleDistMatrix <- as.matrix(sampleDists)
+rownames(sampleDistMatrix) <- paste(vsd$condition)
+colnames(sampleDistMatrix)
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) ) (255)
+pheatmap(sampleDistMatrix,
+         clustering_distance_rows=sampleDists,
+         clustering_distance_cols=sampleDists,
+         col=colors)
+
+#rlog transformation
+sampleDists <- dist(t(assay(rld)))
+sampleDistMatrix <- as.matrix(sampleDists)
+rownames(sampleDistMatrix) <- paste(vsd$condition)
+colnames(sampleDistMatrix)
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) ) (255)
+pheatmap(sampleDistMatrix,
+         clustering_distance_rows=sampleDists,
+         clustering_distance_cols=sampleDists,
+         col=colors)
+```
+#PCA
+```{r}
+pcaData <- plotPCA(vsd, intgroup="condition", returnData=TRUE)
+percentVar <- round(100 * attr(pcaData, "percentVar"))
+
+DESeq2::plotPCA(vsd, intgroup="condition")
+```
+#3b) Contrasting the different conditions to obtain the total number of over- and under-expressed genes for each contrast. normal="20-0.995-n", climate conditions = "25-0.995-c", "25-0.98-c"
+```{r}
+#Normal vs 25-0.995 climate condition
+ normal_vs_climateA <- results(dds, contrast = c('condition', '20-0.995-n', '25-0.995-c'), alpha = 0.05, lfcThreshold = 0)
+normal_vs_climateA <- subset(normal_vs_climateA, padj<0.05)
+normal_vs_climateA <- normal_vs_climateA[order(normal_vs_climateA$padj),]
+
+summary(normal_vs_climateA)
+
+```
+
+```{r}
+#20-0.995-n vs 25-0.98-c climate condition
+normal_vs_climateB <- results(dds, contrast = c('condition', '20-0.995-n', '25-0.98-c'), alpha = 0.05, lfcThreshold = 0)
+normal_vs_climateB <- subset(normal_vs_climateB, padj<0.05)
+normal_vs_climateB <- normal_vs_climateB[order(normal_vs_climateB$padj),]
+
+summary(normal_vs_climateB)
+
+```
+
+```{r}
+#25-0.98-c vs 25-0.995-c climate condition
+ climateA_vs_climateB <- results(dds, contrast = c('condition', '25-0.995-c', '25-0.98-c'), alpha = 0.05, lfcThreshold = 0)
+climateA_vs_climateB <- subset(climateA_vs_climateB, padj<0.05)
+climateA_vs_climateB <- climateA_vs_climateB[order(climateA_vs_climateB$padj),]
+head(climateA_vs_climateB)
+summary(climateA_vs_climateB)
+
+```
+
+#3c) Performing an intersection of the differentially expressed genes across all contrasts using venn diagram
+```{r}
+
+venndata <- list(normal_vs_climateA = as.character(rownames(normal_vs_climateA)),
+                 normal_vs_climateB = as.character(rownames(normal_vs_climateB)),
+                 climateA_vs_climateB = as.character(rownames(climateA_vs_climateB)))
+
+venn(venndata, universe = NA, small = 0.7, showSetLogicLabel = F,
+     simplify = F, show.plot = TRUE, intersections = TRUE, names)
+
+```
+
+#3b) testing different p-values
+```{r}
+res1 <- results(dds)
+res1 <- subset(res1, padj<0.01)
+res1 <- res1[order(res1$padj),]
+summary(res1)
+
+res2 <- results(dds)
+res2 <- subset(res2, padj<0.1)
+res2 <- res2[order(res2$padj),]
+summary(res2)
+
+#getwd()
+#write.csv(res2, "/res2.csv")
+#summary(res)
+
+```
+
+```{r}
+res <- results(dds)
+res <- subset(res, padj<0.05)
+res <- res[order(res$padj),]
+getwd()
+write.csv(res, "/res.csv")
+#summary(res)
+
+#Ploting topgenes
+topgenes <- res[order(res$padj),][1:30,]
+class(topgenes)
+topgenes<-row.names(topgenes)
+topgenes
+pheatmap(assay(vsd)[topgenes,], cluster_rows = T, cluster_cols = T,
+         fontsize_row = 8, annotation_col = NA)
+```
+
+#3d) Plotting Trichothecene genes
+```{r}
+#Ploting tri10 gene (g3245.t1)
+tri10 <- res[order(res$padj),][1500:1510,]
+tri10<-row.names(tri10)
+tri10
+pheatmap(assay(vsd)[tri10,], cluster_rows = T, cluster_cols = T,
+         fontsize_row = 8, annotation_col = NA)
+```
+
+```{r}
+#Ploting tri3 gene (g3785.t1)
+tri3 <- res[order(res$padj),][3830:3840,]
+tri3 <-row.names(tri3)
+tri3
+pheatmap(assay(vsd)[tri3,], cluster_rows = T, cluster_cols = T,
+         fontsize_row = 8, annotation_col = NA)
+
+```
+
+`

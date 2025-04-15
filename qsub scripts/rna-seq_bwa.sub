@@ -1,0 +1,252 @@
+#!/bin/bash
+##
+## MATLAB submission script for PBS on CR2 
+## ------------------------------------------
+##
+##"MATLAB-sub2022v1"
+## Follow the 6 steps below to configure your job
+## 
+## STEP 1:
+##
+## Enter a job name after the -N on the lin/e below:
+##
+#PBS -N BWA-Alignment_s411309
+##
+## STEP 2:
+##
+## Select the number of cpus/cores required by modifying the #PBS -l select line below
+##
+## Normally you select cpus in chunks of 16 cpus
+## The Maximum value for ncpus is 16 and mpiprocs MUST be the same value as ncpus.
+##
+## PLEASE NOTE
+## ===========
+## The standard matlab application does not run on more than one node
+## This select line must not be altered
+##
+#PBS -l select=1:ncpus=8:mpiprocs=8
+##
+## STEP 3:
+##
+## Select the correct queue by modifying the #PBS -q line below
+##
+## half_hour	-  30 minutes
+## one_hour	-   1 hour
+## three_hour   -   3 hours
+## six_hour     -   6 hours
+## half_day	-  12 hours
+## one_day	-  24 hours
+## two_day	-  48 hours
+## five_day	- 120 hours
+## ten_day	- 240 hours (by special arrangement)
+##
+#PBS -q six_hour
+##
+## STEP 4:
+##
+## Replace the hpc@cranfield.ac.uk email address
+## with your Cranfield email address on the #PBS -M line below:
+## Your email address is NOT your username
+##
+#PBS -m abe 
+#PBS -M khalidadam.yusuf.309@cranfield.ac.uk
+##
+## ====================================
+## DO NOT CHANGE THE LINES BETWEEN HERE
+## ====================================
+#PBS -l application=matlab
+#PBS -j oe
+#PBS -W sandbox=PRIVATE
+#PBS -k n
+ln -s $PWD $PBS_O_WORKDIR/$PBS_JOBID
+## Change to working directory
+cd $PBS_O_WORKDIR
+## Calculate number of CPUs
+export cpus=`cat $PBS_NODEFILE | wc -l`
+## ========
+## AND HERE
+## ========
+##
+## STEP 5: 
+## 
+## Load the production USE
+module use /apps2/modules/all 
+
+#Q1. QC: quality score of >20% was observed
+#####################################################
+##(b) Aligner 2 BWA (Burrows_Wheeler Aligner)
+###loading BWA module#########
+module load BWA
+module load picard
+module load SAMtools
+
+##indexing the reference genome using BWA
+bwa index -a bwtsw -p genomeIndex_bwa flang.fasta
+
+##Mapping the reads using BWA
+#B009951
+ bwa mem -M -t 8 -R \
+ "@RG\tID:group1\tSM:sample1\tPL:illumina\tLB:lib1\tPU:unit1" \
+genomeIndex_bwa \
+ ~/I-BIX-NGS_dataForAssignment_flang/rawReads/trimmedReads/B009951_1_paired.fq.gz \
+ ~/I-BIX-NGS_dataForAssignment_flang/rawReads/trimmedReads/B009951_2_paired.fq.gz \
+>B009951_bwa.sam
+#B009952
+bwa mem -M -t 8 -R \
+ "@RG\tID:group1\tSM:sample1\tPL:illumina\tLB:lib1\tPU:unit1" \
+genomeIndex_bwa \
+ ~/I-BIX-NGS_dataForAssignment_flang/rawReads/trimmedReads/B009952_1_paired.fq.gz \
+ ~/I-BIX-NGS_dataForAssignment_flang/rawReads/trimmedReads/B009952_2_paired.fq.gz \
+>B009952_bwa.sam
+#B009953
+bwa mem -M -t 8 -R \
+ "@RG\tID:group1\tSM:sample1\tPL:illumina\tLB:lib1\tPU:unit1" \
+genomeIndex_bwa \
+ ~/I-BIX-NGS_dataForAssignment_flang/rawReads/trimmedReads/B009953_1_paired.fq.gz \
+ ~/I-BIX-NGS_dataForAssignment_flang/rawReads/trimmedReads/B009953_2_paired.fq.gz \
+>B009953_bwa.sam
+#B50981
+bwa mem -M -t 8 -R \
+ "@RG\tID:group1\tSM:sample1\tPL:illumina\tLB:lib1\tPU:unit1" \
+genomeIndex_bwa \
+ ~/I-BIX-NGS_dataForAssignment_flang/rawReads/trimmedReads/B50981_1_paired.fq.gz \
+ ~/I-BIX-NGS_dataForAssignment_flang/rawReads/trimmedReads/B50981_2_paired.fq.gz \
+>B50981_bwa.sam
+#B50982
+bwa mem -M -t 8 -R \
+ "@RG\tID:group1\tSM:sample1\tPL:illumina\tLB:lib1\tPU:unit1" \
+genomeIndex_bwa \
+ ~/I-BIX-NGS_dataForAssignment_flang/rawReads/trimmedReads/B50982_1_paired.fq.gz \
+ ~/I-BIX-NGS_dataForAssignment_flang/rawReads/trimmedReads/B50982_2_paired.fq.gz \
+>B50982_bwa.sam
+#B50983
+bwa mem -M -t 8 -R \
+ "@RG\tID:group1\tSM:sample1\tPL:illumina\tLB:lib1\tPU:unit1" \
+genomeIndex_bwa \
+ ~/I-BIX-NGS_dataForAssignment_flang/rawReads/trimmedReads/B50983_1_paired.fq.gz \
+ ~/I-BIX-NGS_dataForAssignment_flang/rawReads/trimmedReads/B50983_2_paired.fq.gz \
+>B50983_bwa.sam
+#B50995s1
+bwa mem -M -t 8 -R \
+ "@RG\tID:group1\tSM:sample1\tPL:illumina\tLB:lib1\tPU:unit1" \
+genomeIndex_bwa \
+ ~/I-BIX-NGS_dataForAssignment_flang/rawReads/trimmedReads/B50995s1_1_paired.fq.gz \
+ ~/I-BIX-NGS_dataForAssignment_flang/rawReads/trimmedReads/B50995s1_2_paired.fq.gz \
+>B50995s1_bwa.sam
+#B50995s2
+bwa mem -M -t 8 -R \
+ "@RG\tID:group1\tSM:sample1\tPL:illumina\tLB:lib1\tPU:unit1" \
+genomeIndex_bwa \
+ ~/I-BIX-NGS_dataForAssignment_flang/rawReads/trimmedReads/B50995s2_1_paired.fq.gz \
+ ~/I-BIX-NGS_dataForAssignment_flang/rawReads/trimmedReads/B50995s2_2_paired.fq.gz \
+>B50995s2_bwa.sam
+#B50995s3
+bwa mem -M -t 8 -R \
+ "@RG\tID:group1\tSM:sample1\tPL:illumina\tLB:lib1\tPU:unit1" \
+genomeIndex_bwa \
+ ~/I-BIX-NGS_dataForAssignment_flang/rawReads/trimmedReads/B50995s3_1_paired.fq.gz \
+ ~/I-BIX-NGS_dataForAssignment_flang/rawReads/trimmedReads/B50995s3_2_paired.fq.gz \
+>B50995s3_bwa.sam
+
+##Converting SAM file into binary BAM file
+
+# Convert SAM to sorted, indexed BAM
+java -jar $EBROOTPICARD/picard.jar SortSam \
+    INPUT=B009951_bwa.sam \
+    OUTPUT=B009951_bwa.bam \
+    SORT_ORDER=coordinate
+java -jar $EBROOTPICARD/picard.jar BuildBamIndex \
+    INPUT=B009951_bwa.bam
+
+java -jar $EBROOTPICARD/picard.jar SortSam \
+    INPUT=B009952_bwa.sam \
+    OUTPUT=B009952_bwa.bam \
+    SORT_ORDER=coordinate
+java -jar $EBROOTPICARD/picard.jar BuildBamIndex \
+    INPUT=B009952_bwa.bam
+
+java -jar $EBROOTPICARD/picard.jar SortSam \
+    INPUT=B009953_bwa.sam \
+    OUTPUT=B009953_bwa.bam \
+    SORT_ORDER=coordinate
+java -jar $EBROOTPICARD/picard.jar BuildBamIndex \
+    INPUT=B009953_bwa.bam
+
+java -jar $EBROOTPICARD/picard.jar SortSam \
+    INPUT=B50981_bwa.sam \
+    OUTPUT=B50981_bwa.bam \
+    SORT_ORDER=coordinate
+java -jar $EBROOTPICARD/picard.jar BuildBamIndex \
+    INPUT=B50981_bwa.bam
+
+java -jar $EBROOTPICARD/picard.jar SortSam \
+    INPUT=B50982_bwa.sam \
+    OUTPUT=B50982_bwa.bam \
+    SORT_ORDER=coordinate
+java -jar $EBROOTPICARD/picard.jar BuildBamIndex \
+    INPUT=B50982_bwa.bam
+
+java -jar $EBROOTPICARD/picard.jar SortSam \
+    INPUT=B50983_bwa.sam \
+    OUTPUT=B50983_bwa.bam \
+    SORT_ORDER=coordinate
+java -jar $EBROOTPICARD/picard.jar BuildBamIndex \
+    INPUT=B50983_bwa.bam
+
+java -jar $EBROOTPICARD/picard.jar SortSam \
+    INPUT=B50995s1_bwa.sam \
+    OUTPUT=B50995s1_bwa.bam \
+    SORT_ORDER=coordinate
+java -jar $EBROOTPICARD/picard.jar BuildBamIndex \
+    INPUT=B50995s1_bwa.bam
+
+java -jar $EBROOTPICARD/picard.jar SortSam \
+    INPUT=B50995s2_bwa.sam \
+    OUTPUT=B50995s2_bwa.bam \
+    SORT_ORDER=coordinate
+java -jar $EBROOTPICARD/picard.jar BuildBamIndex \
+    INPUT=B50995s2_bwa.bam
+
+java -jar $EBROOTPICARD/picard.jar SortSam \
+    INPUT=B50995s3_bwa.sam \
+    OUTPUT=B50995s3_bwa.bam \
+    SORT_ORDER=coordinate
+java -jar $EBROOTPICARD/picard.jar BuildBamIndex \
+    INPUT=B50995s3_bwa.bam
+
+##########################################################
+##5. Perform read counts on the bam files using HTSeq
+## Make sure you use other gff parameters if your annotation file
+## doesn't have the default values (i.e. -i , -t, --additional-attr).
+## https://htseq.readthedocs.io/en/release_0.11.1/count.html
+##########################################################
+
+
+##Make directory for HTSeq
+
+ ## You can either do it for each sample individually or create a for loop to do it iteratively
+
+#########################################################
+##6. Differential expression and dowstream analysis can be 
+##   performed directly on R
+###########################################################
+
+
+## Tidy up the log directory
+
+
+##
+## STEP 6: 
+## 
+## Put the correct parameters in the matlab execution line
+## below to run MATLAB
+## Unless you are sure do not change the default parameters
+##
+## The main parameters to modify is the input filename - change example.m to your own filename
+
+
+## Tidy up the log directory
+## DO NOT CHANGE THE LINE BELOW
+## ============================
+rm $PBS_O_WORKDIR/$PBS_JOBID
+#
